@@ -9,6 +9,7 @@ import {
   persistStore,
 } from 'redux-persist';
 import { PURGE, REGISTER, REHYDRATE } from 'redux-persist/es/constants';
+import { chatReducer } from '../features/chat/chatSlice';
 
 const usersPersistConfig = {
   key: 'chat:users',
@@ -17,6 +18,7 @@ const usersPersistConfig = {
 };
 
 const rootReducer = combineReducers({
+  chat: chatReducer,
   users: persistReducer(usersPersistConfig, usersReducer),
 });
 
