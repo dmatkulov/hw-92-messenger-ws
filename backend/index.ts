@@ -8,7 +8,7 @@ import config from './config';
 import messagesRouter from './routers/messages';
 import { ActiveConnections, IncomingMessage } from './types';
 import Message from './models/Message';
-import { RequestWithUser } from './middleware/auth';
+import User from './models/User';
 
 const app = express();
 expressWs(app);
@@ -22,33 +22,43 @@ app.use('/chat', messagesRouter);
 
 const routerWS = express.Router();
 const activeConnections: ActiveConnections = {};
-routerWS.ws('/chat', (ws, req: RequestWithUser) => {
+
+const getUserById = async (id: string) => {
+  return User.findById(id).select('displayName').lean();
+};
+
+routerWS.ws('/messages', (ws, _req) => {
   const id = crypto.randomUUID();
-  console.log('Client connected id= ', id);
 
   activeConnections[id] = ws;
-  ws.send(JSON.stringify({ type: 'WELCOME', payload: 'You are connected' }));
 
-  ws.on('message', (message) => {
+  ws.on('message', async (message) => {
     const parsedMessage = JSON.parse(message.toString()) as IncomingMessage;
 
     if (parsedMessage.type === 'SEND_MESSAGE') {
       const newMessage = new Message(parsedMessage.payload);
       void newMessage.save();
 
+      const userInfo = await getUserById(parsedMessage.payload.userId);
+
+      const editedMessage = {
+        ...newMessage,
+        user: userInfo,
+      };
+
       Object.values(activeConnections).forEach((connection) => {
         const outgoing = {
           type: 'NEW_MESSAGE',
-          payload: parsedMessage.payload,
+          payload: editedMessage,
         };
 
         connection.send(JSON.stringify(outgoing));
+        console.log({ outgoing });
       });
     }
   });
 
   ws.on('close', () => {
-    console.log('Client disconnected, ', id);
     delete activeConnections[id];
   });
 });

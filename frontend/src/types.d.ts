@@ -19,29 +19,28 @@ export interface ChatMessage {
 
 export interface ApiMessage {
   _id: string;
-  user: string;
+  userId: string;
+  username: string;
   message: string;
+  createdAt: string;
 }
 
 export interface IncomingChatMessage {
   type: 'NEW_MESSAGE';
-  payload: ChatMessage;
+  payload: ApiMessage;
 }
 
 export interface IncomingLoginMessage {
   type: 'ONLINE_USERS';
-  payload: LoggedUser;
+  payload: LoggedUser[];
 }
 
-export interface IncomingWelcomeMessage {
-  type: 'WELCOME';
-  payload: string;
-}
+export type IncomingMessage = IncomingChatMessage | IncomingLoginMessage;
 
-export type IncomingMessage =
-  | IncomingChatMessage
-  | IncomingLoginMessage
-  | IncomingWelcomeMessage;
+export interface MessageMutation {
+  user: string;
+  message: string;
+}
 
 export interface RegisterMutation {
   email: string;

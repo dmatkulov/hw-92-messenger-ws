@@ -3,7 +3,7 @@ import { MessageFields } from '../types';
 import User from './User';
 
 const MessageSchema = new mongoose.Schema<MessageFields>({
-  user: {
+  userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
@@ -15,9 +15,17 @@ const MessageSchema = new mongoose.Schema<MessageFields>({
       message: 'User does not exist!',
     },
   },
+  username: {
+    type: String,
+    required: true,
+  },
   message: {
     type: String,
     required: [true, 'Message body must be present'],
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

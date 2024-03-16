@@ -8,8 +8,7 @@ const messagesRouter = Router();
 
 messagesRouter.get('/', auth, async (_req, res, next) => {
   try {
-    const message = await Message.find().limit(30).sort({ _id: -1 });
-
+    const message = await Message.find().limit(30).sort({ createdAt: 1 });
     return res.send(message);
   } catch (e) {
     return next(e);

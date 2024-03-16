@@ -3,23 +3,26 @@ import List from '@mui/material/List';
 import { Divider, Grid, Paper } from '@mui/material';
 import ChatForm from '../components/ChatForm';
 import { useEffect, useRef, useState } from 'react';
-import { ChatMessage, IncomingMessage, LoggedUser } from '../../../types';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { selectUser } from '../../users/usersSlice';
 import { selectLatest } from '../chatSlice';
-import OnlineUserItem from '../components/OnlineUserItem';
 import { fetchMessages } from '../chatThunks';
+import { selectUser } from '../../users/usersSlice';
+import { ApiMessage, IncomingMessage } from '../../../types';
 
 const ChatList = () => {
-  const [loggedUsers, setLoggedUsers] = useState<LoggedUser | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sentLogin, setSentLogin] = useState(false);
+  const dispatch = useAppDispatch();
 
   const user = useAppSelector(selectUser);
   const latestMessages = useAppSelector(selectLatest);
-  const dispatch = useAppDispatch();
 
   const ws = useRef<WebSocket | null>(null);
+
+  const [messages, setMessages] = useState<ApiMessage[]>([]);
+
+  useEffect(() => {
+    dispatch(fetchMessages());
+    setMessages((prevState) => [...prevState, ...latestMessages]);
+  }, [dispatch]);
 
   useEffect(() => {
     ws.current = new WebSocket('ws://localhost:8000/messages');
@@ -31,16 +34,8 @@ const ChatList = () => {
     ws.current.addEventListener('message', (event) => {
       const decodedMessage = JSON.parse(event.data) as IncomingMessage;
 
-      if (decodedMessage.type === 'ONLINE_USERS') {
-        setLoggedUsers(decodedMessage.payload);
-      }
-
       if (decodedMessage.type === 'NEW_MESSAGE') {
         setMessages((prevState) => [...prevState, decodedMessage.payload]);
-      }
-
-      if (decodedMessage.type === 'WELCOME') {
-        console.log(decodedMessage.payload);
       }
     });
 
@@ -51,27 +46,20 @@ const ChatList = () => {
     };
   }, []);
 
-  const sendLoginMessage = () => {
+  const sendMessage = (messageText: string) => {
     if (!ws.current) return;
-    ws.current.addEventListener('open', () => {
-      if (!sentLogin) {
-        const loginMessage = { type: 'LOGIN', payload: user?.token };
-        ws.current?.send(JSON.stringify(loginMessage));
-        setSentLogin(true);
-      }
-    });
+
+    ws.current.send(
+      JSON.stringify({
+        type: 'SEND_MESSAGE',
+        payload: {
+          userId: user?._id,
+          username: user?.displayName,
+          message: messageText,
+        },
+      }),
+    );
   };
-
-  useEffect(() => {
-    void sendLoginMessage();
-  }, []);
-
-  useEffect(() => {
-    dispatch(fetchMessages());
-  }, [dispatch]);
-
-  console.log({ messages });
-  console.log({ loggedUsers });
 
   return (
     <>
@@ -90,14 +78,7 @@ const ChatList = () => {
             borderRight: '1px solid #e0e0e0',
           }}
         >
-          <List>
-            {loggedUsers && (
-              <OnlineUserItem
-                contact={loggedUsers.displayName}
-                key={loggedUsers._id}
-              />
-            )}
-          </List>
+          <List>Online users</List>
         </Grid>
         <Grid item xs={9}>
           <List
@@ -106,12 +87,12 @@ const ChatList = () => {
               overflowY: 'auto',
             }}
           >
-            {latestMessages.map((message) => (
+            {messages.map((message) => (
               <ChatItem message={message} key={message._id} />
             ))}
           </List>
           <Divider />
-          <ChatForm />
+          <ChatForm onSubmit={sendMessage} />
         </Grid>
       </Grid>
     </>
