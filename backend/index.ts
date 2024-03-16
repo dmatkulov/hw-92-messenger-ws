@@ -8,6 +8,7 @@ import config from './config';
 import messagesRouter from './routers/messages';
 import { ActiveConnections, IncomingMessage } from './types';
 import Message from './models/Message';
+import { RequestWithUser } from './middleware/auth';
 
 const app = express();
 expressWs(app);
@@ -21,7 +22,7 @@ app.use('/chat', messagesRouter);
 
 const routerWS = express.Router();
 const activeConnections: ActiveConnections = {};
-routerWS.ws('/chat', (ws) => {
+routerWS.ws('/chat', (ws, req: RequestWithUser) => {
   const id = crypto.randomUUID();
   console.log('Client connected id= ', id);
 
