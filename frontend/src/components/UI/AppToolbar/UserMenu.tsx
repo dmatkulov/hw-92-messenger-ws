@@ -2,7 +2,7 @@ import React from 'react';
 import { User } from '../../../types';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { selectLogOutLoading } from '../../../features/users/usersSlice';
-import { Button, CircularProgress } from '@mui/material';
+import { Button, CircularProgress, Stack } from '@mui/material';
 import { logOut } from '../../../features/users/usersThunks';
 import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
@@ -25,17 +25,19 @@ const UserMenu: React.FC<Props> = ({ user }) => {
   return (
     <>
       {loading && <CircularProgress />}
-      <Typography color="black"> {user.displayName}</Typography>
-      <Button
-        variant="contained"
-        color="secondary"
-        disableElevation
-        size="small"
-        sx={{ borderRadius: 5, px: 2 }}
-        onClick={handleLogOut}
-      >
-        Leave
-      </Button>
+      <Stack direction="row" spacing={2}>
+        <Typography color="black"> {user.displayName}</Typography>
+        <Button
+          variant="contained"
+          color="secondary"
+          disableElevation
+          size="small"
+          sx={{ borderRadius: 5, px: 2 }}
+          onClick={handleLogOut}
+        >
+          Leave
+        </Button>
+      </Stack>
     </>
   );
 };

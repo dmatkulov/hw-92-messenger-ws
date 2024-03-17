@@ -1,13 +1,13 @@
 import ChatItem from '../components/ChatItem';
-import List from '@mui/material/List';
-import { Divider, Grid, Paper } from '@mui/material';
+import { CircularProgress, Divider, Grid, Paper } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { selectLatest } from '../chatSlice';
+import { selectFetchLoading, selectLatest } from '../chatSlice';
 import { fetchMessages } from '../chatThunks';
 import { ApiMessage, IncomingMessage, LoggedUser } from '../../../types';
 import OnlineUserItem from '../components/OnlineUserItem';
 import Typography from '@mui/material/Typography';
+import List from '@mui/material/List';
 import { selectUser } from '../../users/usersSlice';
 import ChatForm from '../components/ChatForm';
 
@@ -15,18 +15,19 @@ const ChatList = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
   const latestMessages = useAppSelector(selectLatest);
+  const messagesLoading = useAppSelector(selectFetchLoading);
 
   const [messages, setMessages] = useState<ApiMessage[]>([]);
   const [loggedUsers, setLoggedUsers] = useState<LoggedUser[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     dispatch(fetchMessages());
   }, [dispatch]);
-
   useEffect(() => {
+    ws.current = new WebSocket('ws://localhost:8000/messages');
+
     if (!ws.current) return;
 
     ws.current.addEventListener('close', () => console.log('ws closed'));
@@ -52,17 +53,13 @@ const ChatList = () => {
   const sendLoginMessage = () => {
     if (!ws.current) return;
 
-    if (!isLoggedIn) {
-      ws.current.addEventListener('open', () => {
-        const loginMessage = { type: 'LOGIN', payload: user?.token };
-        ws.current?.send(JSON.stringify(loginMessage));
-      });
-      setIsLoggedIn(true);
-    }
+    ws.current.addEventListener('open', () => {
+      const loginMessage = { type: 'LOGIN', payload: user?.token };
+      ws.current?.send(JSON.stringify(loginMessage));
+    });
   };
-
   useEffect(() => {
-    if (ws.current) {
+    if (ws.current && user) {
       void sendLoginMessage();
     }
     return () => {
@@ -71,6 +68,7 @@ const ChatList = () => {
       }
     };
   }, []);
+
   const sendMessage = (messageText: string) => {
     if (!ws.current) return;
 
@@ -116,6 +114,7 @@ const ChatList = () => {
               overflowY: 'auto',
             }}
           >
+            {messagesLoading && <CircularProgress />}
             {latestMessages.map((message) => (
               <ChatItem message={message} key={message._id} />
             ))}

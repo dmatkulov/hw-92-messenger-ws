@@ -59,7 +59,6 @@ const sendOnlineUsers = (activeConnections: ActiveConnections) => {
 };
 routerWS.ws('/messages', (ws, _req) => {
   const id = crypto.randomUUID();
-  console.log('Client connected id= ', id);
 
   activeConnections[id] = ws;
 
@@ -103,7 +102,7 @@ routerWS.ws('/messages', (ws, _req) => {
 
   ws.on('close', () => {
     delete activeConnections[id];
-    console.log('Client disconnected, ', id);
+
     if (userData) {
       loggedUsers = loggedUsers.filter((user) => user._id !== userData._id);
       sendOnlineUsers(activeConnections);

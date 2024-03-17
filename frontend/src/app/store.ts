@@ -12,9 +12,8 @@ import { PURGE, REGISTER, REHYDRATE } from 'redux-persist/es/constants';
 import { chatReducer } from '../features/chat/chatSlice';
 
 const usersPersistConfig = {
-  key: 'chat:users',
+  key: 'messenger:users',
   storage: storage,
-  whitelist: ['user'],
 };
 
 const rootReducer = combineReducers({

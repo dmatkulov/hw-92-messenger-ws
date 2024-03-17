@@ -28,14 +28,14 @@ const run = async () => {
   const [user1, user2, user3] = await User.create(
     {
       email: 'user1',
-      displayName: 'user1',
+      displayName: 'Richard',
       password: '123',
       token: randomUUID(),
       role: 'user',
     },
     {
       email: 'user2',
-      displayName: 'user2',
+      displayName: 'Jessica',
       password: '123',
       token: randomUUID(),
       role: 'user',
@@ -52,15 +52,23 @@ const run = async () => {
   await Message.create(
     {
       user: user1,
-      message: 'message 1',
+      message: 'Good morning, everyone!',
     },
     {
       user: user2,
-      message: 'message 2',
+      message: 'How was your day?',
+    },
+    {
+      user: user2,
+      message: 'Just finished reading a fascinating book.',
     },
     {
       user: user3,
-      message: 'message 3',
+      message: "Let's meet for lunch tomorrow.",
+    },
+    {
+      user: user3,
+      message: "The weather is lovely today, isn't it?",
     },
   );
 
