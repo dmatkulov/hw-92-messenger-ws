@@ -8,7 +8,6 @@ import config from './config';
 import messagesRouter from './routers/messages';
 import { ActiveConnections, IncomingMessage } from './types';
 import Message from './models/Message';
-import User from './models/User';
 
 const app = express();
 expressWs(app);
@@ -23,10 +22,6 @@ app.use('/chat', messagesRouter);
 const routerWS = express.Router();
 const activeConnections: ActiveConnections = {};
 
-const getUserById = async (id: string) => {
-  return User.findById(id).select('displayName').lean();
-};
-
 routerWS.ws('/messages', (ws, _req) => {
   const id = crypto.randomUUID();
 
@@ -39,21 +34,13 @@ routerWS.ws('/messages', (ws, _req) => {
       const newMessage = new Message(parsedMessage.payload);
       void newMessage.save();
 
-      const userInfo = await getUserById(parsedMessage.payload.userId);
-
-      const editedMessage = {
-        ...newMessage,
-        user: userInfo,
-      };
-
       Object.values(activeConnections).forEach((connection) => {
         const outgoing = {
           type: 'NEW_MESSAGE',
-          payload: editedMessage,
+          payload: newMessage,
         };
 
         connection.send(JSON.stringify(outgoing));
-        console.log({ outgoing });
       });
     }
   });
