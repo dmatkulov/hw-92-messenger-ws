@@ -25,8 +25,8 @@ const UserMenu: React.FC<Props> = ({ user }) => {
   return (
     <>
       {loading && <CircularProgress />}
-      <Stack direction="row" spacing={2}>
-        <Typography color="black"> {user.displayName}</Typography>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Typography color="black">Hi, {user.displayName}!</Typography>
         <Button
           variant="contained"
           color="secondary"

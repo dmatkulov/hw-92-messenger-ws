@@ -5,7 +5,7 @@ import RegisterUser from './features/users/containers/RegisterUser';
 import ProtectedRoute from './components/UI/ProtectedRoute/ProtectedRoute';
 import { selectUser } from './features/users/usersSlice';
 import { useAppSelector } from './app/hooks';
-import ChatList from './features/chat/containers/ChatList';
+import Chat from './features/chat/containers/Chat';
 
 function App() {
   const user = useAppSelector(selectUser);
@@ -22,7 +22,7 @@ function App() {
                   user && (user.role === 'admin' || user.role === 'user')
                 }
               >
-                {<ChatList />}
+                {<Chat />}
               </ProtectedRoute>
             }
           />

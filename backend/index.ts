@@ -12,8 +12,8 @@ import {
   LoggedUser,
   MessageWS,
 } from './types';
-import Message from './models/Message';
-import User from './models/User';
+import { getMessage } from './middleware/messageWS';
+import { getUserAuth } from './middleware/userWS';
 
 const app = express();
 expressWs(app);
@@ -31,24 +31,24 @@ const activeConnections: ActiveConnections = {};
 let loggedUsers: LoggedUser[] = [];
 let userData: LoggedUser;
 
-const getUserAuth = async (token: string) => {
-  const user = await User.findOne({ token });
-
-  if (user) {
-    userData = {
-      _id: user._id,
-      displayName: user.displayName,
-      token: user.token,
+const sendNewMessage = (
+  activeConnections: ActiveConnections,
+  message: MessageWS,
+) => {
+  Object.values(activeConnections).forEach((connection) => {
+    const outgoing = {
+      type: 'NEW_MESSAGE',
+      payload: message,
     };
 
-    const existing = loggedUsers.find((user) => user.token === token);
-
-    if (!existing) {
-      loggedUsers.push(userData);
-    }
-  }
+    connection.send(JSON.stringify(outgoing));
+  });
 };
-const sendOnlineUsers = (activeConnections: ActiveConnections) => {
+
+const sendOnlineUsers = (
+  activeConnections: ActiveConnections,
+  loggedUsers: LoggedUser[],
+) => {
   Object.values(activeConnections).forEach((connection) => {
     const outgoing = {
       type: 'ONLINE_USERS',
@@ -57,6 +57,7 @@ const sendOnlineUsers = (activeConnections: ActiveConnections) => {
     connection.send(JSON.stringify(outgoing));
   });
 };
+
 routerWS.ws('/messages', (ws, _req) => {
   const id = crypto.randomUUID();
 
@@ -66,40 +67,27 @@ routerWS.ws('/messages', (ws, _req) => {
     const parsedMessage = JSON.parse(message.toString()) as IncomingMessage;
 
     if (parsedMessage.type === 'LOGIN') {
-      await getUserAuth(parsedMessage.payload);
-      sendOnlineUsers(activeConnections);
+      userData = await getUserAuth(parsedMessage.payload);
+
+      if (userData) {
+        const existing = loggedUsers.find(
+          (user) => user.token === userData.token,
+        );
+
+        if (!existing) {
+          loggedUsers.push(userData);
+        }
+
+        if (loggedUsers.length > 0) {
+          sendOnlineUsers(activeConnections, loggedUsers);
+        }
+      }
     }
 
     if (parsedMessage.type === 'SEND_MESSAGE') {
-      const user = await User.findOne({ token: parsedMessage.payload.token });
-
-      if (user) {
-        const newMessage = new Message({
-          user: user._id,
-          message: parsedMessage.payload.message,
-          createdAt: new Date(),
-        });
-
-        await newMessage.save();
-
-        const messageData: MessageWS = {
-          _id: newMessage._id,
-          user: {
-            _id: user._id,
-            displayName: user.displayName,
-          },
-          message: newMessage.message,
-          createdAt: newMessage.createdAt,
-        };
-
-        Object.values(activeConnections).forEach((connection) => {
-          const outgoing = {
-            type: 'NEW_MESSAGE',
-            payload: messageData,
-          };
-
-          connection.send(JSON.stringify(outgoing));
-        });
+      const messageData = await getMessage(parsedMessage.payload);
+      if (messageData) {
+        sendNewMessage(activeConnections, messageData);
       }
     }
   });
@@ -109,7 +97,9 @@ routerWS.ws('/messages', (ws, _req) => {
 
     if (userData) {
       loggedUsers = loggedUsers.filter((user) => user._id !== userData._id);
-      sendOnlineUsers(activeConnections);
+      if (loggedUsers.length > 0) {
+        sendOnlineUsers(activeConnections, loggedUsers);
+      }
     }
   });
 });
