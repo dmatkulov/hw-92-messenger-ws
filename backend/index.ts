@@ -71,32 +71,36 @@ routerWS.ws('/messages', (ws, _req) => {
     }
 
     if (parsedMessage.type === 'SEND_MESSAGE') {
-      const newMessage = new Message({
-        user: userData._id,
-        message: parsedMessage.payload,
-        createdAt: new Date(),
-      });
+      const user = await User.findOne({ token: parsedMessage.payload.token });
 
-      await newMessage.save();
+      if (user) {
+        const newMessage = new Message({
+          user: user._id,
+          message: parsedMessage.payload.message,
+          createdAt: new Date(),
+        });
 
-      const messageData: MessageWS = {
-        _id: newMessage._id,
-        user: {
-          _id: userData._id,
-          displayName: userData.displayName,
-        },
-        message: newMessage.message,
-        createdAt: newMessage.createdAt,
-      };
+        await newMessage.save();
 
-      Object.values(activeConnections).forEach((connection) => {
-        const outgoing = {
-          type: 'NEW_MESSAGE',
-          payload: messageData,
+        const messageData: MessageWS = {
+          _id: newMessage._id,
+          user: {
+            _id: user._id,
+            displayName: user.displayName,
+          },
+          message: newMessage.message,
+          createdAt: newMessage.createdAt,
         };
 
-        connection.send(JSON.stringify(outgoing));
-      });
+        Object.values(activeConnections).forEach((connection) => {
+          const outgoing = {
+            type: 'NEW_MESSAGE',
+            payload: messageData,
+          };
+
+          connection.send(JSON.stringify(outgoing));
+        });
+      }
     }
   });
 

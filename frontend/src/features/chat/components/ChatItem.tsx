@@ -4,14 +4,9 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
-import { Grid, IconButton } from '@mui/material';
+import { Grid } from '@mui/material';
 import { ApiMessage } from '../../../types';
 import dayjs from 'dayjs';
-import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { selectUser } from '../../users/usersSlice';
-import { selectDeleteLoading } from '../chatSlice';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { deleteMessage, fetchMessages } from '../chatThunks';
 
 interface Props {
   message: ApiMessage;
@@ -19,14 +14,6 @@ interface Props {
 
 const ChatItem: React.FC<Props> = ({ message }) => {
   const date = dayjs(message.createdAt).format('hh:mm');
-  const user = useAppSelector(selectUser);
-  const deleteLoading = useAppSelector(selectDeleteLoading);
-  const dispatch = useAppDispatch();
-
-  const handleDelete = async (id: string) => {
-    await dispatch(deleteMessage(id));
-    await dispatch(fetchMessages());
-  };
 
   return (
     <ListItem alignItems="flex-start">
@@ -53,15 +40,6 @@ const ChatItem: React.FC<Props> = ({ message }) => {
           />
           <ListItemText secondary={date} />
         </Grid>
-        {user && user.role === 'admin' && (
-          <IconButton
-            disableRipple
-            disabled={deleteLoading}
-            onClick={() => handleDelete(message._id)}
-          >
-            <DeleteOutlineIcon />
-          </IconButton>
-        )}
       </Grid>
     </ListItem>
   );

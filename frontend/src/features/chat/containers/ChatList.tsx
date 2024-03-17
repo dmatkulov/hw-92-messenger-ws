@@ -75,7 +75,10 @@ const ChatList = () => {
     ws.current.send(
       JSON.stringify({
         type: 'SEND_MESSAGE',
-        payload: messageText,
+        payload: {
+          token: user?.token,
+          message: messageText,
+        },
       }),
     );
   };
@@ -98,12 +101,15 @@ const ChatList = () => {
           }}
         >
           <List>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" ml={2} mt={2} gutterBottom>
               Online users
             </Typography>
 
-            {loggedUsers.map((logged) => (
-              <OnlineUserItem contact={logged.displayName} key={logged._id} />
+            {loggedUsers.map((loggedUser) => (
+              <OnlineUserItem
+                contactName={loggedUser.displayName}
+                key={loggedUser._id}
+              />
             ))}
           </List>
         </Grid>

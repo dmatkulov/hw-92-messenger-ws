@@ -14,6 +14,7 @@ import { chatReducer } from '../features/chat/chatSlice';
 const usersPersistConfig = {
   key: 'messenger:users',
   storage: storage,
+  whitelist: ['user'],
 };
 
 const rootReducer = combineReducers({

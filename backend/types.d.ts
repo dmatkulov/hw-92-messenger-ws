@@ -23,7 +23,10 @@ export interface MessageWS {
 
 export interface IncomingChatMessage {
   type: 'SEND_MESSAGE';
-  payload: string;
+  payload: {
+    token: string;
+    message: string;
+  };
 }
 
 export interface IncomingLoginMessage {

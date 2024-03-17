@@ -10,10 +10,3 @@ export const fetchMessages = createAsyncThunk<ApiMessage[]>(
     return response.data ?? [];
   },
 );
-
-export const deleteMessage = createAsyncThunk<void, string>(
-  'chat/deleteOne',
-  async (id) => {
-    await axiosApi.delete(routes.chat + '/' + id);
-  },
-);
