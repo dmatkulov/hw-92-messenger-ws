@@ -42,7 +42,6 @@ const UserSchema = new mongoose.Schema<UserFields, UserModel, UserMethods>({
     enum: ['user', 'admin'],
     default: 'user',
   },
-  googleID: String,
 });
 
 UserSchema.methods.checkPassword = function (password: string) {

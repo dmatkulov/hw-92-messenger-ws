@@ -6,19 +6,24 @@ export interface ActiveConnections {
 }
 
 export interface MessageFields {
-  userId: mongoose.Types.ObjectId;
-  username: string;
+  user: mongoose.Types.ObjectId;
+  message: string;
+  createdAt: Date;
+}
+
+export interface MessageWS {
+  _id: mongoose.Types.ObjectId;
+  user: {
+    _id: mongoose.Types.ObjectId;
+    displayName: string;
+  };
   message: string;
   createdAt: Date;
 }
 
 export interface IncomingChatMessage {
   type: 'SEND_MESSAGE';
-  payload: {
-    userId: string;
-    username: string;
-    message: string;
-  };
+  payload: string;
 }
 
 export interface IncomingLoginMessage {
@@ -40,7 +45,6 @@ export interface UserFields {
   password: string;
   token: string;
   role: string;
-  googleID?: string;
 }
 
 interface UserMethods {

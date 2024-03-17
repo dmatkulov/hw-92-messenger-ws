@@ -1,32 +1,32 @@
 import ChatItem from '../components/ChatItem';
 import List from '@mui/material/List';
 import { Divider, Grid, Paper } from '@mui/material';
-import ChatForm from '../components/ChatForm';
 import { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { selectLatest } from '../chatSlice';
 import { fetchMessages } from '../chatThunks';
+import { ApiMessage, IncomingMessage, LoggedUser } from '../../../types';
+import OnlineUserItem from '../components/OnlineUserItem';
+import Typography from '@mui/material/Typography';
 import { selectUser } from '../../users/usersSlice';
-import { ApiMessage, IncomingMessage } from '../../../types';
+import ChatForm from '../components/ChatForm';
 
 const ChatList = () => {
   const dispatch = useAppDispatch();
-
   const user = useAppSelector(selectUser);
   const latestMessages = useAppSelector(selectLatest);
 
-  const ws = useRef<WebSocket | null>(null);
-
   const [messages, setMessages] = useState<ApiMessage[]>([]);
+  const [loggedUsers, setLoggedUsers] = useState<LoggedUser[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     dispatch(fetchMessages());
-    setMessages((prevState) => [...prevState, ...latestMessages]);
   }, [dispatch]);
 
   useEffect(() => {
-    ws.current = new WebSocket('ws://localhost:8000/messages');
-
     if (!ws.current) return;
 
     ws.current.addEventListener('close', () => console.log('ws closed'));
@@ -37,6 +37,10 @@ const ChatList = () => {
       if (decodedMessage.type === 'NEW_MESSAGE') {
         setMessages((prevState) => [...prevState, decodedMessage.payload]);
       }
+
+      if (decodedMessage.type === 'ONLINE_USERS') {
+        setLoggedUsers(decodedMessage.payload);
+      }
     });
 
     return () => {
@@ -45,18 +49,35 @@ const ChatList = () => {
       }
     };
   }, []);
+  const sendLoginMessage = () => {
+    if (!ws.current) return;
 
+    if (!isLoggedIn) {
+      ws.current.addEventListener('open', () => {
+        const loginMessage = { type: 'LOGIN', payload: user?.token };
+        ws.current?.send(JSON.stringify(loginMessage));
+      });
+      setIsLoggedIn(true);
+    }
+  };
+
+  useEffect(() => {
+    if (ws.current) {
+      void sendLoginMessage();
+    }
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, []);
   const sendMessage = (messageText: string) => {
     if (!ws.current) return;
 
     ws.current.send(
       JSON.stringify({
         type: 'SEND_MESSAGE',
-        payload: {
-          userId: user?._id,
-          username: user?.displayName,
-          message: messageText,
-        },
+        payload: messageText,
       }),
     );
   };
@@ -78,7 +99,15 @@ const ChatList = () => {
             borderRight: '1px solid #e0e0e0',
           }}
         >
-          <List>Online users</List>
+          <List>
+            <Typography variant="h6" gutterBottom>
+              Online users
+            </Typography>
+
+            {loggedUsers.map((logged) => (
+              <OnlineUserItem contact={logged.displayName} key={logged._id} />
+            ))}
+          </List>
         </Grid>
         <Grid item xs={9}>
           <List
@@ -87,6 +116,9 @@ const ChatList = () => {
               overflowY: 'auto',
             }}
           >
+            {latestMessages.map((message) => (
+              <ChatItem message={message} key={message._id} />
+            ))}
             {messages.map((message) => (
               <ChatItem message={message} key={message._id} />
             ))}

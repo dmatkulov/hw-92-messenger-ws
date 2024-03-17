@@ -1,11 +1,8 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import User from '../models/User';
-import { OAuth2Client } from 'google-auth-library';
-import config from '../config';
 
 const usersRouter = Router();
-const client = new OAuth2Client(config.google.clientId);
 
 usersRouter.get('/', async (_req, res, next) => {
   try {
@@ -34,46 +31,6 @@ usersRouter.post('/', async (req, res, next) => {
     }
 
     next(e);
-  }
-});
-
-usersRouter.post('/google', async (req, res, next) => {
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken: req.body.credential,
-      audience: config.google.clientId,
-    });
-
-    const payload = ticket.getPayload();
-
-    if (!payload) {
-      return res.status(400).send({ error: 'Google login error!' });
-    }
-
-    const email = payload['email'];
-    const id = payload['sub'];
-    const displayName = payload['name'];
-
-    if (!email) {
-      return res.status(400).send({ error: 'Email is not present' });
-    }
-
-    let user = await User.findOne({ googleID: id });
-
-    if (!user) {
-      user = new User({
-        email,
-        password: crypto.randomUUID(),
-        googleID: id,
-        displayName,
-      });
-    }
-
-    user.generateToken();
-    await user.save();
-    return res.send({ user });
-  } catch (e) {
-    return next(e);
   }
 });
 

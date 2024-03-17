@@ -51,18 +51,15 @@ const run = async () => {
 
   await Message.create(
     {
-      userId: user1,
-      username: 'user1',
+      user: user1,
       message: 'message 1',
     },
     {
-      userId: user2,
-      username: 'user2',
+      user: user2,
       message: 'message 2',
     },
     {
-      userId: user3,
-      username: 'admin',
+      user: user3,
       message: 'message 3',
     },
   );

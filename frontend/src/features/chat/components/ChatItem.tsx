@@ -14,10 +14,11 @@ interface Props {
 
 const ChatItem: React.FC<Props> = ({ message }) => {
   const date = dayjs(message.createdAt).format('hh:mm');
+
   return (
     <ListItem alignItems="flex-start">
       <ListItemAvatar>
-        <Avatar alt={message.username} />
+        <Avatar alt={message.user.displayName} />
       </ListItemAvatar>
       <Grid container>
         <Grid item xs={12}>
@@ -28,7 +29,7 @@ const ChatItem: React.FC<Props> = ({ message }) => {
                 fontSize="small"
                 color="text.secondary"
               >
-                {message.username}
+                {message.user.displayName}
               </Typography>
             }
             secondary={

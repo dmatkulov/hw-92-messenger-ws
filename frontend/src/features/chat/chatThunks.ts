@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ApiMessage } from '../../types';
 import axiosApi from '../../axiosApi';
-import { routes } from '../../constants';
+import { routes } from '../../helpers/constants';
 
 export const fetchMessages = createAsyncThunk<ApiMessage[]>(
   'messages/fetchLatest',

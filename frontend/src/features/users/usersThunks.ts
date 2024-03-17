@@ -7,7 +7,7 @@ import {
   ValidationError,
 } from '../../types';
 import axiosApi from '../../axiosApi';
-import { routes } from '../../constants';
+import { routes } from '../../helpers/constants';
 import { isAxiosError } from 'axios';
 import { RootState } from '../../app/store';
 import { unsetUser } from './usersSlice';

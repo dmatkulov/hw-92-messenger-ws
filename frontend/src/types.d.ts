@@ -19,8 +19,10 @@ export interface ChatMessage {
 
 export interface ApiMessage {
   _id: string;
-  userId: string;
-  username: string;
+  user: {
+    _id: string;
+    displayName: string;
+  };
   message: string;
   createdAt: string;
 }
