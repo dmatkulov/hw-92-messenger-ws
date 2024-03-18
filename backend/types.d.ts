@@ -38,10 +38,14 @@ export interface IncomingLoginMessage {
 
 export type IncomingMessage = IncomingChatMessage | IncomingLoginMessage;
 
-export interface LoggedUser {
+export interface OnlineUser {
   _id: mongoose.Types.ObjectId;
   displayName: string;
   token: string;
+}
+
+export interface LoggedInUser {
+  [id: string]: OnlineUser;
 }
 
 export interface UserFields {

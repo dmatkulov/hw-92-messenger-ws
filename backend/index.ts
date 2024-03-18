@@ -9,11 +9,12 @@ import messagesRouter from './routers/messages';
 import {
   ActiveConnections,
   IncomingMessage,
-  LoggedUser,
-  MessageWS,
+  LoggedInUser,
+  OnlineUser,
 } from './types';
 import { getMessage } from './middleware/messageWS';
 import { getUserAuth } from './middleware/userWS';
+import { sendNewMessage, sendOnlineUsers } from './utils';
 
 const app = express();
 expressWs(app);
@@ -28,35 +29,10 @@ app.use('/chat', messagesRouter);
 const routerWS = express.Router();
 
 const activeConnections: ActiveConnections = {};
-let loggedUsers: LoggedUser[] = [];
-let userData: LoggedUser;
 
-const sendNewMessage = (
-  activeConnections: ActiveConnections,
-  message: MessageWS,
-) => {
-  Object.values(activeConnections).forEach((connection) => {
-    const outgoing = {
-      type: 'NEW_MESSAGE',
-      payload: message,
-    };
-
-    connection.send(JSON.stringify(outgoing));
-  });
-};
-
-const sendOnlineUsers = (
-  activeConnections: ActiveConnections,
-  loggedUsers: LoggedUser[],
-) => {
-  Object.values(activeConnections).forEach((connection) => {
-    const outgoing = {
-      type: 'ONLINE_USERS',
-      payload: loggedUsers,
-    };
-    connection.send(JSON.stringify(outgoing));
-  });
-};
+const loggedInUsers: LoggedInUser = {};
+let onlineUsers: OnlineUser[] = [];
+let userData: OnlineUser;
 
 routerWS.ws('/messages', (ws, _req) => {
   const id = crypto.randomUUID();
@@ -70,16 +46,17 @@ routerWS.ws('/messages', (ws, _req) => {
       userData = await getUserAuth(parsedMessage.payload);
 
       if (userData) {
-        const existing = loggedUsers.find(
+        loggedInUsers[id] = userData;
+        const existing = onlineUsers.find(
           (user) => user.token === userData.token,
         );
 
         if (!existing) {
-          loggedUsers.push(userData);
+          onlineUsers.push(userData);
         }
 
-        if (loggedUsers.length > 0) {
-          sendOnlineUsers(activeConnections, loggedUsers);
+        if (onlineUsers.length > 0) {
+          sendOnlineUsers(activeConnections, onlineUsers);
         }
       }
     }
@@ -95,11 +72,12 @@ routerWS.ws('/messages', (ws, _req) => {
   ws.on('close', () => {
     delete activeConnections[id];
 
-    if (userData) {
-      loggedUsers = loggedUsers.filter((user) => user._id !== userData._id);
-      if (loggedUsers.length > 0) {
-        sendOnlineUsers(activeConnections, loggedUsers);
-      }
+    const loggedOutUser = loggedInUsers[id];
+    if (loggedOutUser) {
+      onlineUsers = onlineUsers.filter(
+        (user) => user._id !== loggedOutUser._id,
+      );
+      sendOnlineUsers(activeConnections, onlineUsers);
     }
   });
 });
