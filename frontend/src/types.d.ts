@@ -12,11 +12,6 @@ export interface LoggedUser {
   token: string;
 }
 
-export interface ChatMessage {
-  user: string;
-  message: string;
-}
-
 export interface ApiMessage {
   _id: string;
   user: {
@@ -38,11 +33,6 @@ export interface IncomingLoginMessage {
 }
 
 export type IncomingMessage = IncomingChatMessage | IncomingLoginMessage;
-
-export interface MessageMutation {
-  user: string;
-  message: string;
-}
 
 export interface RegisterMutation {
   email: string;

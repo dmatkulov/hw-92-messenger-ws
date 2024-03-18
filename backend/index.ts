@@ -30,13 +30,12 @@ const routerWS = express.Router();
 
 const activeConnections: ActiveConnections = {};
 
-const loggedInUsers: LoggedInUser = {};
+const clients: LoggedInUser = {};
 let onlineUsers: OnlineUser[] = [];
 let userData: OnlineUser;
 
 routerWS.ws('/messages', (ws, _req) => {
   const id = crypto.randomUUID();
-
   activeConnections[id] = ws;
 
   ws.on('message', async (message) => {
@@ -46,7 +45,9 @@ routerWS.ws('/messages', (ws, _req) => {
       userData = await getUserAuth(parsedMessage.payload);
 
       if (userData) {
-        loggedInUsers[id] = userData;
+        if (!clients[id]) {
+          clients[id] = userData;
+        }
         const existing = onlineUsers.find(
           (user) => user.token === userData.token,
         );
@@ -70,15 +71,16 @@ routerWS.ws('/messages', (ws, _req) => {
   });
 
   ws.on('close', () => {
-    delete activeConnections[id];
-
-    const loggedOutUser = loggedInUsers[id];
+    const loggedOutUser = clients[id];
     if (loggedOutUser) {
       onlineUsers = onlineUsers.filter(
-        (user) => user._id !== loggedOutUser._id,
+        (user) => user.token !== loggedOutUser.token,
       );
       sendOnlineUsers(activeConnections, onlineUsers);
+      delete clients[id];
     }
+
+    delete activeConnections[id];
   });
 });
 

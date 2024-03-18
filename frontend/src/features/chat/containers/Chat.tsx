@@ -21,14 +21,17 @@ const Chat = () => {
   }, [dispatch]);
 
   const connectWs = () => {
+    if (!user) return;
+
     ws.current = new WebSocket('ws://localhost:8000/messages');
 
     if (!ws.current) return;
 
     ws.current.addEventListener('open', () => {
       if (user) {
-        const loginMessage = { type: 'LOGIN', payload: user?.token };
-        ws.current?.send(JSON.stringify(loginMessage));
+        ws.current?.send(
+          JSON.stringify({ type: 'LOGIN', payload: user?.token }),
+        );
       }
     });
 
@@ -45,18 +48,27 @@ const Chat = () => {
     });
 
     ws.current.addEventListener('close', () => {
-      setTimeout(connectWs, 5000);
+      ws.current = null;
+      if (user) {
+        setTimeout(connectWs, 5000);
+      }
+    });
+
+    ws.current.addEventListener('error', (error) => {
+      console.error('WebSocket error:', error);
     });
   };
 
   useEffect(() => {
     if (user) {
       connectWs();
-    } else {
+    }
+
+    return () => {
       if (ws.current) {
         ws.current.close();
       }
-    }
+    };
   }, [user]);
 
   const sendMessage = (messageText: string) => {

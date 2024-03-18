@@ -15,7 +15,7 @@ function App() {
       <Layout>
         <Routes>
           <Route
-            path="/"
+            path="/chat"
             element={
               <ProtectedRoute
                 isAllowed={
@@ -28,6 +28,7 @@ function App() {
           />
           <Route path="/register" element={<RegisterUser />} />
           <Route path="/login" element={<LoginUser />} />
+          <Route path="/" element={<LoginUser />} />
           <Route path="*" element={<h2>Not found!</h2>} />
         </Routes>
       </Layout>
