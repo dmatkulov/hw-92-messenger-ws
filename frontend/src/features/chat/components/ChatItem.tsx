@@ -7,8 +7,6 @@ import Typography from '@mui/material/Typography';
 import { Grid } from '@mui/material';
 import { ApiMessage } from '../../../types';
 import dayjs from 'dayjs';
-import { useAppSelector } from '../../../app/hooks';
-import { selectUser } from '../../users/usersSlice';
 
 interface Props {
   message: ApiMessage;
@@ -16,7 +14,6 @@ interface Props {
 
 const ChatItem: React.FC<Props> = ({ message }) => {
   const date = dayjs(message.createdAt).format('hh:mm');
-  const user = useAppSelector(selectUser);
 
   return (
     <ListItem alignItems="flex-start">
@@ -30,15 +27,9 @@ const ChatItem: React.FC<Props> = ({ message }) => {
               <Typography
                 variant="body1"
                 fontSize="small"
-                color={
-                  message.user?.displayName === user.displayName
-                    ? 'blue'
-                    : 'text.secondary'
-                }
+                color="text.secondary"
               >
-                {message.user?.displayName === user.displayName
-                  ? ' You'
-                  : message.user?.displayName}
+                {message.user?.displayName}
               </Typography>
             }
             secondary={

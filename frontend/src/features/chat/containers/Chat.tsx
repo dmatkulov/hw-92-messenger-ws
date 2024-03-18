@@ -25,6 +25,13 @@ const Chat = () => {
 
     if (!ws.current) return;
 
+    ws.current.addEventListener('open', () => {
+      if (user) {
+        const loginMessage = { type: 'LOGIN', payload: user?.token };
+        ws.current?.send(JSON.stringify(loginMessage));
+      }
+    });
+
     ws.current.addEventListener('message', (event) => {
       const decodedMessage = JSON.parse(event.data) as IncomingMessage;
 
@@ -38,39 +45,19 @@ const Chat = () => {
     });
 
     ws.current.addEventListener('close', () => {
-      console.log('WebSocket disconnected, reconnecting...');
       setTimeout(connectWs, 5000);
     });
   };
 
   useEffect(() => {
-    connectWs();
-    return () => {
+    if (user) {
+      connectWs();
+    } else {
       if (ws.current) {
         ws.current.close();
       }
-    };
-  }, []);
-
-  const sendLoginMessage = () => {
-    if (!ws.current) return;
-
-    ws.current.addEventListener('open', () => {
-      const loginMessage = { type: 'LOGIN', payload: user?.token };
-      ws.current?.send(JSON.stringify(loginMessage));
-    });
-  };
-
-  useEffect(() => {
-    if (ws.current && user) {
-      void sendLoginMessage();
     }
-    return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
-    };
-  }, []);
+  }, [user]);
 
   const sendMessage = (messageText: string) => {
     if (!ws.current) return;
