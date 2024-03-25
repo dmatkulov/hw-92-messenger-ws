@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
-  Alert,
   Avatar,
   Box,
   Container,
@@ -15,7 +14,6 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import {
-  selectGoogleLoginError,
   selectRegisterError,
   selectRegisterLoading,
   setRegisterError,
@@ -27,7 +25,6 @@ import { RegisterMutation } from '../../../types';
 const RegisterUser: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const googleError = useAppSelector(selectGoogleLoginError);
   const error = useAppSelector(selectRegisterError);
 
   const loading = useAppSelector(selectRegisterLoading);
@@ -84,12 +81,6 @@ const RegisterUser: React.FC = () => {
         <Typography component="h1" variant="h5">
           Sign up
         </Typography>
-
-        {googleError && (
-          <Alert severity="error" sx={{ mt: 3, width: '100%' }}>
-            {googleError.error}
-          </Alert>
-        )}
 
         <Box component="form" onSubmit={submitFormHandler} sx={{ mt: 3 }}>
           <Grid container spacing={2}>

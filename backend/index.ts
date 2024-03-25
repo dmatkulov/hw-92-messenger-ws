@@ -5,82 +5,142 @@ import cors from 'cors';
 
 import usersRouter from './routers/users';
 import config from './config';
-import messagesRouter from './routers/messages';
-import {
-  ActiveConnections,
-  IncomingMessage,
-  LoggedInUser,
-  OnlineUser,
-} from './types';
-import { getMessage } from './middleware/messageWS';
-import { getUserAuth } from './middleware/userWS';
-import { sendNewMessage, sendOnlineUsers } from './utils';
+import User from './models/User';
+import { ActiveConnections, IncomingMessage, OnlineUser } from './types';
+import Message from './models/Message';
 
 const app = express();
-expressWs(app);
 
 const port = 8000;
 app.use(express.json());
 app.use(cors());
-
 app.use('/users', usersRouter);
-app.use('/chat', messagesRouter);
+
+expressWs(app);
 
 const routerWS = express.Router();
 
 const activeConnections: ActiveConnections = {};
 
-const clients: LoggedInUser = {};
-let onlineUsers: OnlineUser[] = [];
-let userData: OnlineUser;
+const onlineUsers: OnlineUser[] = [];
 
-routerWS.ws('/messages', (ws, _req) => {
+routerWS.ws('/chat', (ws, _req) => {
   const id = crypto.randomUUID();
   activeConnections[id] = ws;
 
+  let user: OnlineUser | null = null;
+
   ws.on('message', async (message) => {
-    const parsedMessage = JSON.parse(message.toString()) as IncomingMessage;
+    const decodedMessage = JSON.parse(message.toString()) as IncomingMessage;
 
-    if (parsedMessage.type === 'LOGIN') {
-      userData = await getUserAuth(parsedMessage.payload);
-
-      if (userData) {
-        if (!clients[id]) {
-          clients[id] = userData;
-        }
-        const existing = onlineUsers.find(
-          (user) => user.token === userData.token,
-        );
-
-        if (!existing) {
-          onlineUsers.push(userData);
-        }
-
-        if (onlineUsers.length > 0) {
-          sendOnlineUsers(activeConnections, onlineUsers);
-        }
-      }
-    }
-
-    if (parsedMessage.type === 'SEND_MESSAGE') {
-      const messageData = await getMessage(parsedMessage.payload);
-      if (messageData) {
-        sendNewMessage(activeConnections, messageData);
-      }
-    }
-  });
-
-  ws.on('close', () => {
-    const loggedOutUser = clients[id];
-    if (loggedOutUser) {
-      onlineUsers = onlineUsers.filter(
-        (user) => user.token !== loggedOutUser.token,
+    if (decodedMessage.type === 'LOGIN') {
+      user = await User.findOne(
+        { token: decodedMessage.payload },
+        'displayName',
       );
-      sendOnlineUsers(activeConnections, onlineUsers);
-      delete clients[id];
+
+      if (!user) return;
+
+      onlineUsers.push(user);
+
+      const messages = await Message.find()
+        .sort({ createdAt: -1 })
+        .limit(30)
+        .populate('user', 'displayName');
+
+      ws.send(
+        JSON.stringify({
+          type: 'LOGIN-SUCCESS',
+          payload: {
+            onlineUsers,
+            messages,
+          },
+        }),
+      );
+
+      Object.keys(activeConnections).forEach((key) => {
+        if (key !== id) {
+          const connection = activeConnections[key];
+
+          connection.send(
+            JSON.stringify({
+              type: 'NEW-USER',
+              payload: { user },
+            }),
+          );
+        }
+      });
     }
 
-    delete activeConnections[id];
+    if (decodedMessage.type === 'LOGOUT') {
+      delete activeConnections[id];
+
+      const index = onlineUsers.findIndex(
+        (onlineUser) => onlineUser._id === user?._id,
+      );
+
+      if (index !== -1) {
+        onlineUsers.splice(index, 1);
+      }
+
+      Object.keys(activeConnections).forEach((key) => {
+        const connection = activeConnections[key];
+        connection.send(
+          JSON.stringify({
+            type: 'USER-LOGOUT',
+            payload: { onlineUsers },
+          }),
+        );
+      });
+    }
+
+    if (decodedMessage.type === 'SEND-MESSAGE') {
+      if (user) {
+        const msg = new Message({
+          user: user._id,
+          message: decodedMessage.payload,
+          createdAt: new Date(),
+        });
+
+        await msg.save();
+
+        Object.keys(activeConnections).forEach((key) => {
+          const connection = activeConnections[key];
+          connection.send(
+            JSON.stringify({
+              type: 'NEW-MESSAGE',
+              payload: {
+                message: {
+                  _id: msg._id,
+                  user: user,
+                  message: msg.message,
+                  createdAt: msg.createdAt,
+                },
+              },
+            }),
+          );
+        });
+      }
+    }
+
+    ws.on('close', async () => {
+      delete activeConnections[id];
+
+      const ind = onlineUsers.findIndex((item) => item._id === user?._id);
+      onlineUsers.splice(ind, 1);
+
+      Object.keys(activeConnections).forEach((key) => {
+        if (key !== id) {
+          const connection = activeConnections[key];
+          connection.send(
+            JSON.stringify({
+              type: 'USER-LOGOUT',
+              payload: { onlineUsers },
+            }),
+          );
+        }
+      });
+    });
   });
 });
 

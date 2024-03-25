@@ -6,33 +6,27 @@ export interface User {
   displayName: string;
 }
 
-export interface LoggedUser {
+export interface OnlineUser {
   _id: string;
   displayName: string;
-  token: string;
 }
 
-export interface ApiMessage {
+export interface Message {
   _id: string;
-  user: {
-    _id: string;
-    displayName: string;
-  };
+  user: OnlineUser;
   message: string;
   createdAt: string;
 }
 
-export interface IncomingChatMessage {
-  type: 'NEW_MESSAGE';
-  payload: ApiMessage;
+export interface DecodedMessage {
+  type: string;
+  payload: {
+    user: OnlineUser;
+    onlineUsers: OnlineUser[];
+    messages: Message[];
+    message: Message;
+  };
 }
-
-export interface IncomingLoginMessage {
-  type: 'ONLINE_USERS';
-  payload: LoggedUser[];
-}
-
-export type IncomingMessage = IncomingChatMessage | IncomingLoginMessage;
 
 export interface RegisterMutation {
   email: string;

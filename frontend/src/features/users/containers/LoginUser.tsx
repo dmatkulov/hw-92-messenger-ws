@@ -16,7 +16,6 @@ import { LoadingButton } from '@mui/lab';
 import { login } from '../usersThunks';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import {
-  selectGoogleLoginError,
   selectLoginError,
   selectLoginLoading,
   setLoginError,
@@ -29,7 +28,6 @@ const LoginUser: React.FC = () => {
   const dispatch = useAppDispatch();
   const error = useAppSelector(selectLoginError);
   const loading = useAppSelector(selectLoginLoading);
-  const googleError = useAppSelector(selectGoogleLoginError);
 
   const [state, setState] = useState<LoginMutation>({
     email: '',
@@ -78,12 +76,6 @@ const LoginUser: React.FC = () => {
         {error && (
           <Alert severity="error" sx={{ mt: 3, width: '100%' }}>
             {error.error}
-          </Alert>
-        )}
-
-        {googleError && (
-          <Alert severity="error" sx={{ mt: 3, width: '100%' }}>
-            {googleError.error}
           </Alert>
         )}
 

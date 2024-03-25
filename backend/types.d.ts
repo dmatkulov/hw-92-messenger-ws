@@ -11,41 +11,14 @@ export interface MessageFields {
   createdAt: Date;
 }
 
-export interface MessageWS {
-  _id: mongoose.Types.ObjectId;
-  user: {
-    _id: mongoose.Types.ObjectId;
-    displayName: string;
-  };
-  message: string;
-  createdAt: Date;
-}
-
-export interface IncomingChatMessage {
-  type: 'SEND_MESSAGE';
-  payload: MessagePayload;
-}
-
-export interface MessagePayload {
-  token: string;
-  message: string;
-}
-
-export interface IncomingLoginMessage {
-  type: 'LOGIN';
+export interface IncomingMessage {
+  type: string;
   payload: string;
 }
 
-export type IncomingMessage = IncomingChatMessage | IncomingLoginMessage;
-
 export interface OnlineUser {
-  _id: mongoose.Types.ObjectId;
+  _id: string;
   displayName: string;
-  token: string;
-}
-
-export interface LoggedInUser {
-  [id: string]: OnlineUser;
 }
 
 export interface UserFields {
