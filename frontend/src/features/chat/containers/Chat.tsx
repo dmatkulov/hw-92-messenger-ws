@@ -78,7 +78,13 @@ const Chat: React.FC = () => {
         ]);
       }
     };
-  }, []);
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, [user]);
 
   const onSendMessage = (e: React.FormEvent) => {
     e.preventDefault();

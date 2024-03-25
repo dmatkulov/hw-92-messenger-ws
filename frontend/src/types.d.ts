@@ -18,15 +18,40 @@ export interface Message {
   createdAt: string;
 }
 
-export interface DecodedMessage {
-  type: string;
+export interface IncomingLoginMessage {
+  type: 'LOGIN-SUCCESS';
   payload: {
-    user: OnlineUser;
     onlineUsers: OnlineUser[];
     messages: Message[];
+  };
+}
+
+export interface IncomingLogoutMessage {
+  type: 'USER-LOGOUT';
+  payload: {
+    onlineUsers: OnlineUser[];
+  };
+}
+
+export interface IncomingNewUser {
+  type: 'NEW-USER';
+  payload: {
+    user: OnlineUser;
+  };
+}
+
+export interface IncomingNewMessage {
+  type: 'NEW-MESSAGE';
+  payload: {
     message: Message;
   };
 }
+
+export type DecodedMessage =
+  | IncomingLoginMessage
+  | IncomingLogoutMessage
+  | IncomingNewMessage
+  | IncomingNewUser;
 
 export interface RegisterMutation {
   email: string;

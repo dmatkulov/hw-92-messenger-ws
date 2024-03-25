@@ -34,14 +34,22 @@ routerWS.ws('/chat', (ws, _req) => {
     const decodedMessage = JSON.parse(message.toString()) as IncomingMessage;
 
     if (decodedMessage.type === 'LOGIN') {
-      user = await User.findOne(
+      const userData = await User.findOne<OnlineUser>(
         { token: decodedMessage.payload },
         'displayName',
       );
 
-      if (!user) return;
+      if (!userData) return;
 
-      onlineUsers.push(user);
+      const existing = onlineUsers.find((user) => user._id === userData._id);
+
+      user = userData;
+
+      if (!existing) {
+        onlineUsers.push(user);
+      } else {
+        return;
+      }
 
       const messages = await Message.find()
         .sort({ createdAt: -1 })
@@ -96,13 +104,13 @@ routerWS.ws('/chat', (ws, _req) => {
 
     if (decodedMessage.type === 'SEND-MESSAGE') {
       if (user) {
-        const msg = new Message({
+        const newMessage = new Message({
           user: user._id,
           message: decodedMessage.payload,
           createdAt: new Date(),
         });
 
-        await msg.save();
+        await newMessage.save();
 
         Object.keys(activeConnections).forEach((key) => {
           const connection = activeConnections[key];
@@ -111,10 +119,10 @@ routerWS.ws('/chat', (ws, _req) => {
               type: 'NEW-MESSAGE',
               payload: {
                 message: {
-                  _id: msg._id,
+                  _id: newMessage._id,
                   user: user,
-                  message: msg.message,
-                  createdAt: msg.createdAt,
+                  message: newMessage.message,
+                  createdAt: newMessage.createdAt,
                 },
               },
             }),
