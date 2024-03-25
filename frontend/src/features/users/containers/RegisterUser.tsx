@@ -59,7 +59,7 @@ const RegisterUser: React.FC = () => {
 
     try {
       await dispatch(register(state)).unwrap();
-      navigate('/chat');
+      navigate('/');
     } catch (e) {
       console.error(e);
     }

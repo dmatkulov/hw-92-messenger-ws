@@ -50,7 +50,7 @@ const LoginUser: React.FC = () => {
 
     try {
       await dispatch(login(state)).unwrap();
-      navigate('/chat');
+      navigate('/');
     } catch (e) {
       console.error(e);
     }
